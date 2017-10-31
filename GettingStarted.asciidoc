@@ -1,0 +1,232 @@
+== Getting started
+
+=== Get Code
+
+[source, bash]
+----
+go get github.com/pubnub/go
+----
+
+=== Get Code: Source
+
+https://github.com/pubnub/go
+
+== Hello World
+
+[source, go]
+----
+import (
+    pubnub "github.com/pubnub/go"
+)
+
+func main() {
+    config := pubnub.NewConfig()
+    config.SubscribeKey = "demo"
+    config.PublishKey = "demo"
+
+    pn := pubnub.NewPubNub(config)
+    listener := pubnub.NewListener()
+    doneConnect := make(chan bool)
+    donePublish := make(chan bool)
+
+    go func() {
+        for {
+            select {
+            case status := <-listener.Status:
+                switch status.Category {
+                case pubnub.PNDisconnectedCategory:
+                    // This event happens when radio / connectivity is lost
+                case pubnub.PNConnectedCategory:
+                    // Connect event. You can do stuff like publish, and know you'll get it.
+                    // Or just use the connected event to confirm you are subscribed for
+                    // UI / internal notifications, etc
+                    doneConnect <- true
+                case pubnub.PNReconnectedCategory:
+                    // Happens as part of our regular operation. This event happens when
+                    // radio / connectivity is lost, then regained.
+                }
+            case message := <-listener.Message:
+                // Handle new message stored in message.message
+                if message.Channel != "" {
+                    // Message has been received on channel group stored in
+                    // message.Channel
+                } else {
+                    // Message has been received on channel stored in
+                    // message.Subscription
+                }
+
+                /*
+                    log the following items with your favorite logger
+                        - message.Message
+                        - message.Subscription
+                        - message.Timetoken
+                */
+
+                donePublish <- true
+            case <-listener.Presence:
+                // handle presence
+            }
+        }
+    }()
+
+    pn.AddListener(listener)
+
+    pn.Subscribe(&pubnub.SubscribeOperation{
+        Channels: []string{"hello_world"},
+    })
+
+    <-doneConnect
+
+    response, status, err := pn.Publish().
+        Channel("hello_world").Message("Hello!").Execute()
+
+    if err != nil {
+        // Request processing failed.
+        // Handle message publish error
+    }
+
+    fmt.Println(response, status, err)
+
+    <-donePublish
+}
+----
+
+== Copy and paste examples
+
+=== Init
+
+[source, go]
+.INITIALIZING THE CLIENT
+----
+config := pubnub.NewConfig()
+config.SubscribeKey = "my-sub-key"
+config.PublishKey = "my-pub-key"
+
+pn := pubnub.NewPubNub(config)
+----
+
+=== LISTENERS
+
+[source, go]
+.ADDING LISTENERS
+----
+listener := pubnub.NewListener()
+
+go func() {
+    for {
+        select {
+        case status := <-listener.Status:
+            switch status.Category {
+            case pubnub.PNConnectedCategory:
+                // this is expected for a subscribe, this means there is no error or issue whatsoever
+                doneSubscribe <- true
+                return
+            case pubnub.PNDisconnectedCategory:
+                // this is the expected category for an unsubscribe. This means there
+                // was no error in unsubscribing from everything
+            case pubnub.PNReconnectedCategory:
+                // this usually occurs if subscribe temporarily fails but reconnects. This means
+                // there was an error but there is no longer any issue
+            case pubnub.PNAccessDeniedCategory:
+                // this means that PAM does allow this client to subscribe to this
+                // channel and channel group configuration. This is another explicit error
+            }
+        case <-listener.Message:
+        case <-listener.Presence:
+        }
+    }
+}()
+
+pn.AddListener(listener)
+----
+
+[source, go]
+.REMOVING LISTENERS
+----
+listener := pubnub.NewListener()
+
+pn.AddListener(listener)
+
+// some time later
+pn.RemoveListener(listener)
+----
+
+=== TIME
+
+[source, go]
+----
+res, status, err := pn.Time().Execute()
+
+fmt.Println(res, status, err)
+----
+
+=== SUBSCRIBE
+
+[source, go]
+.SUBSCRIBE (LISTEN ON) A CHANNEL
+----
+pn.Subscribe(&pubnub.SubscribeOperation{
+    Channels: []string{"my-channel"},
+})
+----
+
+=== PUBLISH
+
+[source, go]
+----
+res, status, err := pn.Publish().
+    Channel("ch").
+    Message("hey").
+    Execute()
+
+// handle publish result
+fmt.Println(res, status, err)
+----
+
+=== HERE NOW
+
+[source, go]
+----
+res, status, err := pn.HereNow().
+    Channels([]string{"ch"}).
+    IncludeUuids(true).
+    Execute()
+
+fmt.Println(res, status, err)
+----
+
+=== PRESENCE
+
+[source, go]
+----
+pnPresenceListener.Subscribe(&pubnub.SubscribeOperation{
+    Channels:        []string{"my-channel"},
+    PresenceEnabled: true, // also subscribe to related presence information
+})
+----
+
+=== HISTORY
+
+[source, go]
+----
+res, status, err := pn.History().
+    Channel("my-channel").
+    Count(2). // how many items to fetch
+    IncludeTimetoken(true).
+    Reverse(true).
+    Start(int64(1)).
+    End(int64(2)).
+    Execute()
+
+fmt.Println(res, status, err)
+----
+
+=== Unsubscribe
+
+[source, go]
+.STOP SUBSCRIBING (LISTENING) TO A CHANNEL
+----
+pn.Unsubscribe(&pubnub.UnsubscribeOperation{
+    Channels: []string{"my-channel"},
+})
+----
