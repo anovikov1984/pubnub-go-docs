@@ -1,0 +1,196 @@
+== Go Security with Access Control, AES & TLS/SSL encryption for Realtime Apps
+
+[source, go]
+.TO INITIALIZE WITH THE SECRET KEY:
+----
+import (
+	pubnub "github.com/pubnub/go"
+)
+
+config := pubnub.NewConfig()
+config.SubscribeKey = "my_sub_key"
+config.PublishKey = "my_pub_key"
+config.SecretKey = "my_secret_key"
+config.Secure = true
+
+pn := pubnub.NewPubNub(config)
+----
+
+You can set a defult auth key at instantiation time using the auth attribute:
+
+[source, go]
+----
+config := pubnub.NewConfig()
+config.AuthKey = "my_authkey"
+----
+
+==== PUBNUB ACCESS MANAGER - ADMINISTRATIVE-SIDE CONFIGURATION
+
+[source, go]
+----
+config := pubnub.NewConfig()
+config.SubscribeKey = "my_sub_key"
+config.PublishKey = "my_pub_key"
+config.SecretKey = "my_secret_key"
+config.Secure = true
+
+pn := pubnub.NewPubNub(config)
+----
+
+==== PAM OPERATION LEVELS
+
+Pam operations level #1
+
+The first defined rule to match wins. To begin, lets make a blanket no read, no write access at a global level rule:
+
+[source, go]
+----
+res, status, err := pn.Grant().
+    Read(false).
+    Write(false).
+    Manage(false).
+    Ttl(60).
+    Execute()
+
+fmt.Println(res, status, err)
+----
+
+The above states that the rule is good for 60 minutes, and that read and write are denied at the global level. The revoke() method aliases to the grant() method, but with default read and write false, so we can issue the same exact operation using revoke() as:
+
+[source, go]
+----
+res, status, err := pn.Grant().
+    Channels([]string{""}). //channels to allow grant on
+    Groups([]string{""}). // groups to allow grant on the keys we are provisioning
+    Read(false).
+    Write(false).
+    Manage(false).
+    Execute()
+
+fmt.Println(res, status, err)
+----
+
+Next, we can grant read-only permissions for anyone trying to perform read actions (subscribe, history, etc) but only on the public channel:
+
+[source, go]
+----
+res, status, err := pn.Grant().
+    Channels([]string{"public_chat"}). //channels to allow grant on
+    Read(true).
+    Ttl(60). // how long those keys will remain valid (0 for eternity)
+    Execute()
+
+fmt.Println(res, status, err)
+----
+
+And for those with the auth token of authenticateduser, they can both read and write (publishes) to the public chat:
+
+[source, go]
+----
+res, status, err := pn.Grant().
+    Read(true).
+    Write(true).
+    Channels([]string{"public_chat"}).
+    AuthKeys([]string{"authenticateduser"}). // the keys we are provisioning
+    Ttl(60).
+    Execute()
+
+fmt.Println(res, status, err)
+----
+
+[source, go]
+.HANDLING PERMISSION DENIED ERRORS
+----
+&pubnub.PNStatus{
+    Category:9,
+    Operation:0,
+    ErrorData:error(nil),
+    Error:false,
+    TlsEnabled:false,
+    StatusCode:0,
+    Uuid:"",
+    AuthKey:"",
+    Origin:"",
+    ClientRequest:interface {}(nil),
+    AffectedChannels:[]string(nil),
+    AffectedChannelGroups:[]string(nil)
+}
+----
+
+It can be easily handled by taking action on the error callback based on the channel name defined in channels object of the error object:
+
+[source, go]
+----
+listener := pubnub.NewListener()
+
+go func() {
+        for {
+                select {
+                case status := <-listener.Status:
+                        switch status.Category {
+                        case pubnub.PNAccessDeniedCategory:
+                            // Handle permissions here
+                        }
+                case <-listener.Message:
+                case <-listener.Presence:
+                }
+        }
+}()
+
+pn.AddListener(listener)
+
+pn.Subscribe(&pubnub.SubscribeOperation{
+        Channels: []string{"private_chat"},
+})
+----
+
+Grant access to manage CG
+
+[source, go]
+----
+res, status, err := pn.Grant().
+    Read(true).
+    Write(false).
+    Groups([]string{"gr1", "gr2", "gr3"}). // groups to allow grant on the keys we are provisioning
+    AuthKeys([]string{"key1", "key2", "key3"}).
+    Ttl(12337).
+    Execute()
+----
+
+Revoke access to CG
+
+[source, go]
+----
+res, status, err := pn.Grant().
+    Read(false).
+    Write(false).
+    Manage(false).
+    Groups([]string{"gr1", "gr2", "gr3"}).
+    AuthKeys([]string{"key1", "key2", "key3"}).
+    Ttl(60).
+    Execute()
+----
+
+[source, go]
+.MESSAGE LAYER ENCRYPTION AES256
+----
+config := pubnub.NewConfig()
+config.SubscribeKey = "my_sub_key"
+config.PublishKey = "my_pub_key"
+config.CipherKey = "my_cipher_key"
+
+pn := pubnub.NewPubNub(config)
+----
+
+TLS/SSL
+
+[source, go]
+.TLS/SSL is enabled by default, you can disable it in your pubnub config like
+----
+config := pubnub.NewConfig()
+config.SubscribeKey = "my_sub_key"
+config.PublishKey = "my_pub_key"
+config.Secure = false
+
+pn := pubnub.NewPubNub(config)
+----

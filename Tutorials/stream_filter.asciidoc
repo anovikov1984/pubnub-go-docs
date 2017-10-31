@@ -1,0 +1,264 @@
+== Stream Filtering Tutorial for GO V4
+
+=== Publishing With Meta
+
+[source, go]
+----
+pn.Publish().
+    Meta(meta).
+    Message("hello").
+    Channel("ch1").
+    Execute()
+----
+
+=== Subscribing with Filtering
+
+[source, go]
+----
+config := pubnub.NewConfig()
+config.SubscribeKey = "my-key"
+config.FilterExpression = "filter == expression"
+pn := pubnub.NewPubNub(config)
+----
+
+====== EXAMPLE ONE: PREVENT RECEIVING YOUR OWN MESSAGES
+
+[source, go]
+----
+config := pubnub.NewConfig()
+config.SubscribeKey = "my-key"
+config.FilterExpression = "uuid != '" + config.Uuid + "'"
+pn := pubnub.NewPubNub(config)
+----
+
+When publishing messages, you need to include the sender's UUID if you want the subscriber side client filter to work:
+
+[source, go]
+----
+pn.Publish().
+    Meta(map[string]interface{}{
+        "uuid": config.Uuid,
+    }).
+    Message("hello").
+    Channel("ch1").
+    Execute()
+----
+
+====== EXAMPLE TWO: FILTER BY LANGUAGE
+
+[source, go]
+----
+pn.Publish().
+    Meta(map[string]interface{}{
+        "language": "english",
+    }).
+    Message("Hi!").
+    Channel("ch1").
+    Execute()
+----
+
+On the subscriber side, we specify the filter expression to make sure only english messages will come to our subscriber.
+
+[source, go]
+----
+config := pubnub.NewConfig()
+config.SubscribeKey = "my-key"
+config.FilterExpression = "language == 'english'"
+pn := pubnub.NewPubNub(config)
+----
+
+Any messages that do not have language=english in the meta will not arrive to the client. For example, the following publish will not be received.
+
+[source, go]
+----
+pn.Publish().
+    Meta(map[string]interface{}{
+        "language": "french",
+    }).
+    Message("Bonjour").
+    Channel("ch1").
+    Execute()
+----
+
+====== EXAMPLE THREE: FILTER MULTIPLE LANGUAGES
+
+[source, go]
+----
+pn.Publish().
+    Meta(map[string]interface{}{
+        "language": "english",
+    }).
+    Message("Hi!").
+    Channel("ch1").
+    Execute()
+----
+
+[source, go]
+----
+pn.Publish().
+    Meta(map[string]interface{}{
+        "language": "french",
+    }).
+    Message("Bonjour").
+    Channel("ch1").
+    Execute()
+----
+
+[source, go]
+----
+pn.Publish().
+    Meta(map[string]interface{}{
+        "language": "spanish",
+    }).
+    Message("Hola").
+    Channel("ch1").
+    Execute()
+----
+
+On the subscribe side, we are going to use the contains operator to support multiple languages.
+
+[source, go]
+----
+config := pubnub.NewConfig()
+config.SubscribeKey = "my-key"
+config.FilterExpression = "('french', 'spanish') contains language"
+pn := pubnub.NewPubNub(config)
+----
+
+====== EXAMPLE FOUR: NEGATION
+
+[source, go]
+----
+pn.Publish().
+    Meta(map[string]interface{}{
+        "language": "english",
+    }).
+    Message("Hi!").
+    Channel("ch1").
+    Execute()
+----
+
+[source, go]
+----
+pn.Publish().
+    Meta(map[string]interface{}{
+        "language": "french",
+    }).
+    Message("Bonjour").
+    Channel("ch1").
+    Execute()
+----
+
+[source, go]
+----
+pn.Publish().
+    Meta(map[string]interface{}{
+        "language": "spanish",
+    }).
+    Message("Hola").
+    Channel("ch1").
+    Execute()
+----
+
+On the subscribe side, we are going to use the != operator to reject messages written in spanish.
+
+[source, go]
+----
+config := pubnub.NewConfig()
+config.SubscribeKey = "my-key"
+config.FilterExpression = "language != 'spanish'"
+pn := pubnub.NewPubNub(config)
+----
+
+====== EXAMPLE FIVE: MULTIPLE FILTERS
+
+[source, go]
+.PUBLISH MESSAGES TO CHANNEL AAPL WITH META DICT
+
+[source, go]
+----
+pn.Publish().
+    Meta(map[string]interface{}{
+        "price": "99.75",
+        "channel": "AAPL",
+    }).
+    Message("99.75").
+    Channel("AAPL").
+    Execute()
+----
+
+[source, go]
+----
+pn.Publish().
+    Meta(map[string]interface{}{
+        "price": "100.10",
+        "channel": "AAPL",
+    }).
+    Message("99.10").
+    Channel("AAPL").
+    Execute()
+----
+
+[source, go]
+.PUBLISH MESSAGES TO CHANNEL GOOG WITH META DICT
+----
+pn.Publish().
+    Meta(map[string]interface{}{
+        "price": "15.50",
+        "channel": "GOOG",
+    }).
+    Message("15.50").
+    Channel("GOOG").
+    Execute()
+----
+
+[source, go]
+----
+pn.Publish().
+    Meta(map[string]interface{}{
+        "price": "14.95",
+        "channel": "GOOG",
+    }).
+    Message("14.95").
+    Channel("GOOG").
+    Execute()
+----
+
+Client filter would be applied to all channels by default but you could do something like this:
+
+[source, go]
+----
+config := pubnub.NewConfig()
+config.SubscribeKey = "my-key"
+config.FilterExpression = "(price > 100.00 && channel == 'AAPL') || (price < 15.00 && channel == 'GOOG')"
+pn := pubnub.NewPubNub(config)
+----
+
+====== EXAMPLE SIX: ARITHMETIC OPERATIONS
+
+[source, go]
+----
+pn.Publish().
+    Meta(map[string]interface{}{
+        "temperature": "60",
+    }).
+    Message("Hi!").
+    Channel("ch1").
+    Execute()
+----
+
+On the subscriber side, we modify the expression to use the > operator
+
+[source, go]
+----
+meta := make(map[string]interface{})
+
+meta["my"] = "meta"
+meta["name"] = "PubNub"
+
+config := pubnub.NewConfig()
+config.SubscribeKey = "my-key"
+config.FilterExpression = "temperature > 50"
+pn := pubnub.NewPubNub(config)
+----
+

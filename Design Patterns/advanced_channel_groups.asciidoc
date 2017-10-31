@@ -1,0 +1,210 @@
+== Advanced Channel Groups Friend Lists, Status Feed and Presence in Go V4
+
+=== User Identification
+
+[source, go]
+----
+import (
+    pubnub "github.com/pubnub/go"
+)
+
+config := pubnub.NewConfig()
+config.SubscribeKey = "my_sub_key"
+config.PublishKey = "my_pub_key"
+config.Uuid("0c2340c2-8cc1-4898-8868-444ba77d02d2::web")
+
+pn = pubnub.NewPubNub(config)
+----
+
+[source, go]
+----
+import (
+    pubnub "github.com/pubnub/go"
+)
+
+config := pubnub.NewConfig()
+config.SubscribeKey = "my_sub_key"
+config.PublishKey = "my_pub_key"
+config.Uuid("user-a")
+
+pn = pubnub.NewPubNub(config)
+----
+
+=== User Channels
+
+[source, go]
+----
+data := map[string]string{}
+
+data["author"] = "user-a"
+data["status"] = "I am reading about Advanced Channel Groups!"
+data["timestamp"] = strconv.Itoa(int(time.Now().Unix()))
+
+publishRes, _, err := pn.Publish().
+		Message(data).
+		Channel("ch-user-a-status").
+		Execute()
+
+if err != nil {
+    fmt.Println("error happened while publishing: ", err)
+}
+
+fmt.Println("message Published ", publishRes.Timestamp)
+----
+
+=== User Channel Groups
+
+[source, go]
+----
+_, _, err := pn.AddChannelToChannelGroup().
+    Channels([]string{"ch-user-a-present"}).
+    Group("cg-user-a-friends").
+    Execute()
+
+if err != nil {
+    fmt.Println("Operation failed: ", err)
+}
+
+fmt.Println("Channel added to channel group")
+
+_, _, err = pn.AddChannelToChannelGroup().
+    Channels([]string{"ch-user-a-present"}).
+    Group("cg-user-a-status-feed").
+    Execute()
+
+if err != nil {
+    fmt.Println("Operation failed: ", err)
+}
+
+fmt.Println("Channel added to channel group")
+----
+
+=== Friending
+
+[source, go]
+----
+// ************************************
+// * User A and User B become friends
+// ************************************
+
+// Add User B to User A's groups: Add ch-user-b-present to cg-user-a-friends
+_, _, err := pn.AddChannelToChannelGroup().
+    Channels([]string{"ch-user-b-present"}).
+    Group("cg-user-a-friends").
+    Execute()
+
+if err != nil {
+    fmt.Println("Operation failed: ", err)
+}
+
+fmt.Println("Channel added to channel group")
+
+// Add User B to User A's groups: ch-user-b-status to cg-user-a-status-feed
+_, _, err = pn.AddChannelToChannelGroup().
+    Channels([]string{"ch-user-b-status"}).
+    Group("cg-user-a-status-feed").
+    Execute()
+
+if err != nil {
+    fmt.Println("Operation failed: ", err)
+}
+
+fmt.Println("Channel added to channel group")
+
+// Add User A to User B's groups: Add ch-user-a-present to cg-user-b-friends
+_, _, err = pn.AddChannelToChannelGroup().
+    Channels([]string{"ch-user-a-present"}).
+    Group("cg-user-b-friends").
+    Execute()
+
+if err != nil {
+    fmt.Println("Operation failed: ", err)
+}
+
+fmt.Println("Channel added to channel group")
+
+// Add User B to User A's groups: ch-user-a-status to cg-user-b-status-feed
+_, _, err = pn.AddChannelToChannelGroup().
+    Channels([]string{"ch-user-a-status"}).
+    Group("cg-user-b-status-feed").
+    Execute()
+
+if err != nil {
+    fmt.Println("Operation failed: ", err)
+}
+
+fmt.Println("Channel added to channel group")
+----
+
+=== Friends Online/Offline (Presence)
+
+[source, go]
+----
+// Get the List of Friends
+listChannelsRes, _, err := pn.ListChannelsInChannelGroup().
+    ChannelGroup("cg-user-a-friends").
+    Execute()
+
+if err != nil {
+    fmt.Println("Operation failed ", err)
+}
+
+fmt.Println("FRIEND LIST: ")
+for k, v := range listChannelsRes.Channels {
+    fmt.Println("channel: ", k, v)
+}
+
+// Which Friends are online right now
+hereNowRes, _, err := pn.HereNow().
+    ChannelGroups([]string{"cg-user-a-friends"}).
+    Execute()
+
+if err != nil {
+    fmt.Println("Operation failed ", err)
+}
+
+fmt.Println("ONLINE NOW: ", hereNowRes.TotalOccupancy)
+
+listener := pubnub.NewListener()
+
+go func() {
+    for {
+        select {
+        case <-listener.Status:
+        case <-listener.Message:
+        case presence := <-listener.Presence:
+            fmt.Println("PRESENCE ", presence)
+        }
+    }
+}()
+
+// Watch Friends come online / go offline
+pn.Subscribe(&pubnub.SubscribeOperation{
+    Channels:        []string{"cg-user-a-friends"},
+    PresenceEnabled: true,
+})
+----
+
+=== Status Feed (Messages)
+
+[source, go]
+----
+listener := pubnub.NewListener()
+
+go func() {
+    for {
+        select {
+        case <-listener.Status:
+        case message := <-listener.Message:
+            fmt.Println("STATUS: ", message)
+        case <-listener.Presence:
+        }
+    }
+}()
+
+// Watch Friends come online / go offline
+pn.Subscribe(&pubnub.SubscribeOperation{
+    Channels:        []string{"cg-user-a-friends"},
+    PresenceEnabled: true,
+})
+----

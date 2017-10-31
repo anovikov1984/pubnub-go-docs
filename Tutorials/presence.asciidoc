@@ -1,0 +1,404 @@
+== Presence
+
+[source, go]
+.SETTING UUID
+----
+config := pubnub.NewConfig()
+config.SubscribeKey = "my_sub_key"
+config.PublishKey = "my_pub_key"
+config.Uuid("Stephen")
+
+pn = pubnub.NewPubNub(config)
+----
+
+[source, go]
+.RECEIVING PRESENCE JOIN, LEAVE, AND TIMEOUT EVENTS IN REALTIME
+----
+pn.Subscribe(&pubnub.SubscribeOperation{
+    Channels:        []string{"my-channel"},
+    PresenceEnabled: true,
+})
+----
+
+=== Sample Responses
+[source, go]
+.JOIN EVENT
+----
+if presence.Event == "join" {
+    presence.Uuid // 175c2c67-b2a9-470d-8f4b-1db94f90e39e
+    presence.Timestamp // 1345546797
+    presence.Occupancy // 2
+}
+----
+
+[source, go]
+.LEAVE EVENT
+----
+if presence.Event == "leave" {
+    presence.Uuid // 175c2c67-b2a9-470d-8f4b-1db94f90e39e
+    presence.Timestamp // 1345546797
+    presence.Occupancy // 2
+}
+----
+
+[source, go]
+.TIMEOUT EVENT
+----
+if presence.Event == "timeout" {
+    presence.Uuid // 175c2c67-b2a9-470d-8f4b-1db94f90e39e
+    presence.Timestamp // 1345546797
+    presence.Occupancy // 2
+}
+----
+
+[source, go]
+.INTERVAL EVENT
+----
+if presence.Event == "interval" {
+    presence.Uuid // 175c2c67-b2a9-470d-8f4b-1db94f90e39e
+    presence.Timestamp // 1345546797
+    presence.Occupancy // 2
+}
+----
+
+[source, go]
+----
+if presence.Event == "interval" {
+    presence.Timestamp // 1345546797
+    presence.Occupancy // 2
+    presence.Join // [uuid1 uuid2]
+    presence.Timeout
+}
+----
+
+[source, go]
+----
+if presence.Event == "interval" {
+    presence.Timestamp // 1345546797
+    presence.Occupancy // 2
+}
+----
+
+=== ON-DEMAND PRESENCE CALLS
+
+[source, go]
+.HERE NOW
+----
+res, status, err := pn.HereNow().
+    Channels([]string{"my-channel-1"}).
+    IncludeUuids(true).
+    Execute()
+
+fmt.Println(status, err)
+
+for _, v := range res.Channels {
+    fmt.Println("---")
+    fmt.Println("Channel: ", v.ChannelName)
+    fmt.Println("Occupancy: ", v.Occupancy)
+    fmt.Println("Occupants")
+
+    for _, v := range v.Occupants {
+        fmt.Println("Uuid: ", v.Uuid, ", state: ", v.State)
+    }
+}
+----
+
+[source, go]
+.EXAMPLE RESPONSE
+----
+&pubnub.HereNowResponse{
+    TotalChannels:1,
+    TotalOccupancy:1,
+    Channels:[]pubnub.HereNowChannelData{
+        pubnub.HereNowChannelData{
+            ChannelName:"my-channel-1",
+            Occupancy:1,
+            Occupants:[]pubnub.HereNowOccupantsData{
+                pubnub.HereNowOccupantsData{
+                    Uuid:"b675cc45-b66c-414d-a017-8748289f2e91",
+                    State:map[string]interface {}{}
+                }
+            }
+        }
+    }
+}
+----
+
+[source, go]
+.GLOBAL HERE NOW
+----
+res, status, err := pn.HereNow().
+    IncludeState(true). // include state with request (false by default)
+    IncludeUuids(true). // if false, only shows occupancy count
+    Execute()
+
+fmt.Println(res, status, err)
+----
+
+[source, go]
+.EXAMPLE RESPONSE
+----
+&pubnub.HereNowResponse{
+    TotalChannels:2,
+    TotalOccupancy:2,
+    Channels:[]pubnub.HereNowChannelData{
+        pubnub.HereNowChannelData{
+            ChannelName:"my-ch1",
+            Occupancy:1,
+            Occupants:[]pubnub.HereNowOccupantsData{
+                pubnub.HereNowOccupantsData{
+                    Uuid:"b675cc45-b66c-414d-a017-8748289f2e91",
+                    State:map[string]interface {}{}
+                }
+            }
+        },
+        pubnub.HereNowChannelData{
+            ChannelName:"my-ch",
+            Occupancy:1,
+            Occupants:[]pubnub.HereNowOccupantsData{
+                pubnub.HereNowOccupantsData{
+                    Uuid:"b675cc45-b66c-414d-a017-8748289f2e91",
+                    State:map[string]interface {}{}
+                }
+            }
+        }
+    }
+}
+----
+
+[source, go]
+.WHERE NOW
+----
+res, status, err := pn.WhereNow().Execute() // returns a pojo with channels // channel groups which I am part of.
+
+fmt.Println(res, status, err)
+----
+
+[source, go]
+.EXAMPLE RESPONSE
+----
+&pubnub.WhereNowResponse{
+    Channels:[]string{
+        "my-ch1", "my-ch"
+    }
+}
+----
+
+.SETTING CUSTOM PRESENCE STATE
+The `state` API is used to get or set custom presence key/value pairs for a specific `UUID`.
+
+Get State
+
+[source, go]
+----
+res, status, err := pn.GetState().
+    Channels([]string{"ch"}). // channels to fetch state for
+    Uuid("bob"). // uuid of user to fetch, or omit own uuid
+    Execute()
+
+fmt.Println(res, status, err)
+----
+
+Set State
+
+[source, go]
+----
+state := map[string]interface{}
+
+state["full_name"] = "James Patrick Page"
+
+res, status, err := pn.SetState().
+    ChannelGroups([]string{"ch"}). // apply on those channel groups
+    State(state). // the new state
+    Execute()
+
+fmt.Println(res, status, err)
+----
+
+Now that state is set, you could also pull it (again) via the getPresenceState() getter method.
+In addition to setting state via the setPresenceState() setter method, you can subscribe to a channel and set state in a single call with subscribe():
+
+[source, go]
+----
+listener := pubnub.NewListener()
+state := map[string]interface{}
+
+go func() {
+    for {
+        select {
+        case <-listener.Status:
+            switch status.Category {
+            case pubnub.PNConnectedCategory:
+            res, status, err := pn.SetState().
+                Channels([]string{"ch"}).
+                ChannelGroups([]string{"cg"}).
+                State(map[string]interface{}{
+                    "new": "state",
+                    "age": 10,
+                }).
+                Execute()
+
+            fmt.Println(res, status, err)
+            }
+        case <-listener.Message:
+        case <-listener.Presence:
+        }
+    }
+}()
+
+pn.Subscribe(&pubnub.SubscribeOperation{
+    Channels:        []string{"ch"},
+})
+----
+
+In this case, the join event would also include the state information, similar to:
+
+[source, go]
+----
+&pubnub.PNPresence{
+    Event:"join",
+    Uuid:"e23153ec-cf12-464b-9c87-652bd91fff8d",
+    SubscribedChannel:"my-ch-pnpres",
+    ActualChannel:"",
+    Channel:"my-ch",
+    Subscription:"",
+    Occupancy:0,
+    Timetoken:15090248970158377,
+    Timestamp:0,
+    UserMetadata:map[string]interface {}(nil),
+    State:interface {}(nil),
+    Join:[]string(nil),
+    Leave:[]string(nil),
+    Timeout:[]string(nil)
+}
+----
+
+[source, go]
+.HERE NOW AND WHERE NOW ADVANCED USAGE
+----
+&pubnub.HereNowResponse{
+    TotalChannels:2,
+    TotalOccupancy:2,
+    Channels:[]pubnub.HereNowChannelData{
+        pubnub.HereNowChannelData{
+            ChannelName:"ch",
+            Occupancy:1,
+            Occupants:[]pubnub.HereNowOccupantsData{
+                pubnub.HereNowOccupantsData{
+                    Uuid:"b675cc45-b66c-414d-a017-8748289f2e91",
+                    State:map[string]interface {}(nil)
+                }
+            }
+        },
+        pubnub.HereNowChannelData{
+            ChannelName:"ch2",
+            Occupancy:1,
+            Occupants:[]pubnub.HereNowOccupantsData{
+                pubnub.HereNowOccupantsData{
+                    Uuid:"b675cc45-b66c-414d-a017-8748289f2e91",
+                    State:map[string]interface {}(nil)
+                }
+            }
+        }
+    }
+}
+----
+
+Calling with state as false returns the UUIDs, but not the state data:
+
+[source, go]
+----
+&pubnub.HereNowResponse{
+    TotalChannels:2,
+    TotalOccupancy:2,
+    Channels:[]pubnub.HereNowChannelData{
+        pubnub.HereNowChannelData{
+            ChannelName:"ch",
+            Occupancy:1,
+            Occupants:[]pubnub.HereNowOccupantsData{
+                pubnub.HereNowOccupantsData{
+                    Uuid:"b675cc45-b66c-414d-a017-8748289f2e91",
+                    State:map[string]interface {}{}
+                }
+            }
+        },
+        pubnub.HereNowChannelData{
+            ChannelName:"ch2",
+            Occupancy:1,
+            Occupants:[]pubnub.HereNowOccupantsData{
+                pubnub.HereNowOccupantsData{
+                    Uuid:"b675cc45-b66c-414d-a017-8748289f2e91",
+                    State:map[string]interface {}{}
+                }
+            }
+        }
+    }
+}
+----
+
+and calling with uuid as false omits all UUID and state data (since state is a child of uuid):
+
+[source, go]
+----
+&pubnub.HereNowResponse{
+    TotalChannels:2,
+    TotalOccupancy:2,
+    Channels:[]pubnub.HereNowChannelData{
+        pubnub.HereNowChannelData{
+            ChannelName:"ch",
+            Occupancy:1,
+            Occupants:[]pubnub.HereNowOccupantsData{
+                pubnub.HereNowOccupantsData{
+                    Uuid:"b675cc45-b66c-414d-a017-8748289f2e91",
+                    State:map[string]interface {}{}
+                }
+            }
+        },
+        pubnub.HereNowChannelData{
+            ChannelName:"ch2",
+            Occupancy:1,
+            Occupants:[]pubnub.HereNowOccupantsData{
+                pubnub.HereNowOccupantsData{
+                    Uuid:"b675cc45-b66c-414d-a017-8748289f2e91",
+                    State:map[string]interface {}{}
+                }
+            }
+        }
+    }
+}
+----
+
+[source, go]
+.OPTIMIZING TIMEOUT EVENTS WITH HEARTBEAT TUNING
+----
+config := pubnub.NewConfig()
+config.SubscribeKey = "my-sub-key"
+config.PublishKey = "my-pub-key"
+config.Uuid = "Stephen"
+
+pn := pubnub.NewPubNub(config)
+----
+
+At the expense of additional network bandwidth to send additional heartbeat pings, you could decrease this default presence server timeout to lets say, 120 seconds:
+
+[source, go]
+----
+config := pubnub.NewConfig()
+config.SubscribeKey = "my-sub-key"
+config.PublishKey = "my-pub-key"
+config.PresenceTimeout = 120
+
+pn := pubnub.NewPubNub(config)
+----
+
+By default, the client will send a heartbeat ping every HEARTBEAT / 2 - 1 seconds (aka Heartbeat Interval), or in this case, every 59s. To tune this further, we could override this heartbeat interval of 59s to every 30s. For example:
+
+[source, go]
+----
+config := pubnub.NewConfig()
+config.SubscribeKey = "my-sub-key"
+config.PublishKey = "my-pub-key"
+config.SetPresenceTimeoutWithCustomInterval(120, 59)
+
+pn := pubnub.NewPubNub(config)
+----

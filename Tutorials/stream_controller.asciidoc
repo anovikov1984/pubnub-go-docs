@@ -1,0 +1,121 @@
+== Stream Controller Overview
+
+[source, go]
+.SUBSCRIBING BY SPECIFYING CHANNEL AS AN ARRAY
+----
+pn.Subscribe(&pubnub.SubscribeOperation{
+    Channels:   []string{"my-channel1", "my-channel2"}, // subscribe to channels information
+})
+----
+
+[source, go]
+.PASS AN ARRAY OF CHANNELS TO UNSUBSCRIBE
+----
+pn.Unsubscribe(&pubnub.UnsubscribeOperation{
+    ChannelGroups: []string{"cg1", "cg2", "cg3"},
+    Channels: []string{"ch1", "ch2", "ch3"},
+})
+----
+
+==== WILDCARD SUBSCRIBE
+
+[source, go]
+----
+pn.Subscribe(&pubnub.SubscribeOperation{
+    Channels:   []string{"foo.*"}, // subscribe to channels information
+})
+----
+
+==== CHANNEL GROUPS
+
+==== CHANNEL GROUP CODE SAMPLES
+
+[source, go]
+.DEFINING THE CHANNEL GROUP
+----
+res, status, err := pn.ListChannelsInChannelGroup().
+    ChannelGroup("family").
+    Execute()
+
+fmt.Println(res, status, err)
+----
+
+[source, go]
+.ADDING CHANNELS TO A CHANNEL GROUP
+----
+res, status, err := pn.AddChannelToChannelGroup().
+    Channels([]string{"wife"}).
+    Group(channelGroup).
+    Execute()
+
+fmt.Println(res, status, err)
+----
+
+Continuing creation of the CG, we add the son and daughter channels to this channel group as well.
+
+[source, go]
+----
+res, status, err := pn.AddChannelToChannelGroup().
+    Channels([]string{"son", "daughter"}).
+    Group(channelGroup).
+    Execute()
+
+fmt.Println(res, status, err)
+----
+
+[source, go]
+.SUBSCRIBING TO THE CHANNEL GROUP
+----
+pn.Subscribe(&pubnub.SubscribeOperation{
+    ChannelGroups:   []string{channelGroup},
+    PresenceEnabled: true,
+})
+----
+
+[source, go]
+.UNSUBSCRIBING FROM THE CHANNEL GROUP
+----
+pn.Unsubscribe(&pubnub.UnsubscribeOperation{
+    ChannelGroups: []string{channelGroup},
+})
+----
+
+[source, go]
+.RECEIVING CHANNEL GROUP PRESENCE MESSAGES
+----
+pn.Subscribe(&pubnub.SubscribeOperation{
+    ChannelGroups:   []string{"cg1", "cg2"}, // subscribe to channel groups
+    PresenceEnabled: true, // also subscribe to related presence information
+})
+----
+
+[source, go]
+.REMOVING A CHANNEL FROM A CHANNEL GROUP
+----
+res, status, err := pn.RemoveChannelFromChannelGroup().
+    Channels([]string{"son"}).
+    Group("family").
+    Execute()
+
+fmt.Println(res, status, err)
+----
+
+[source, go]
+.LISTING ALL CHANNELS IN A CHANNEL GROUP
+----
+res, status, err := pn.ListChannelsInChannelGroup().
+    ChannelGroup("family").
+    Execute()
+
+fmt.Println(res, status, err)
+----
+
+[source, go]
+.REMOVING CHANNEL GROUPS BY NAME
+----
+res, status, err := pn.DeleteChannelGroup().
+    ChannelGroup("family").
+    Execute()
+
+fmt.Println(res, status, err)
+----
