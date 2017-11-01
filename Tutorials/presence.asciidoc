@@ -6,7 +6,7 @@
 config := pubnub.NewConfig()
 config.SubscribeKey = "my_sub_key"
 config.PublishKey = "my_pub_key"
-config.Uuid("Stephen")
+config.Uuid = "Stephen"
 
 pn = pubnub.NewPubNub(config)
 ----

@@ -11,7 +11,7 @@ import (
 config := pubnub.NewConfig()
 config.SubscribeKey = "my_sub_key"
 config.PublishKey = "my_pub_key"
-config.Uuid("0c2340c2-8cc1-4898-8868-444ba77d02d2::web")
+config.Uuid = "0c2340c2-8cc1-4898-8868-444ba77d02d2::web"
 
 pn = pubnub.NewPubNub(config)
 ----
@@ -25,7 +25,7 @@ import (
 config := pubnub.NewConfig()
 config.SubscribeKey = "my_sub_key"
 config.PublishKey = "my_pub_key"
-config.Uuid("user-a")
+config.Uuid = "user-a"
 
 pn = pubnub.NewPubNub(config)
 ----
