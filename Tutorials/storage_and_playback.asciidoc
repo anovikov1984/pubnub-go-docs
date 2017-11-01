@@ -67,8 +67,8 @@ To page for the next 2, use the set the start attribute to start timetoken value
 res, status, err = pn.History().
     Channel("history_channel").
     Count(100).
-    Start(13847168620721752). // first timestamp
-    End(15090358935871532). // last timestamp
+    Start(int64(13847168620721752)). // first timestamp
+    End(int64(15090358935871532)). // last timestamp
     Execute()
 ----
 

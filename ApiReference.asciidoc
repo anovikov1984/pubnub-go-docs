@@ -424,7 +424,7 @@ pn.Subscribe(&pubnub.SubscribeOperation{
     Channels: []string,
     ChannelGroups: []string,
     Timetoken: int64,
-    Presence: bool,
+    PresenceEnabled: bool,
 })
 ----
 
@@ -433,7 +433,7 @@ pn.Subscribe(&pubnub.SubscribeOperation{
 | Channels | []string | Optional | Subscribe to `channels`, Either `channel` or `channel_group` is required
 | ChannelGroups | []string | Optional | Subscribe to `channel_groups`, Either `channel` or `channel_group` is required
 | Timetoken | int64 | Optional | Pass a timetoken
-| WithPresence | bool | Optional | Also subscribe to related presence information
+| PresenceEnabled | bool | Optional | Also subscribe to related presence information
 |====
 
 ====== Basic Usage
@@ -526,7 +526,7 @@ import (
 
 pn.Subscribe(&pubnub.SubscribeOperation{
     Channels: []string{"my-channel"},
-    Presence: true,
+    PresenceEnabled: true,
 })
 ----
 
@@ -1119,7 +1119,7 @@ pn.SetState().
 
 | Channels | []string | Optional | `channels` to set `state`
 | ChannelGroups | []string | Optional | `channel groups` to set `state`
-| State | []string | Optional | `state` to set
+| State | map[string]interface{} | Optional | `state` to set
 | Uuid | string | Optional | Set state for specific UUID.
 |===
 
@@ -1417,7 +1417,7 @@ pn.AddChannelToChannelGroup().
 |===
 | Parameter | Type | Required | Description
 
-| Channels | []string |array | Yes | `channels` to add to the channel group
+| Channels | []string | Yes | `channels` to add to the channel group
 | Group | string  | Yes | The `channel group` to add the channels to
 |===
 
@@ -1475,8 +1475,8 @@ pn.ListChannelsInChannelGroup().
 |===
 | Method | Type | Description
 
-| Channels | []string | Yes |
-| Group | string | Yes |
+| Channels | []string | Yes
+| Group | string | Yes
 |===
 
 === Removing Channels from Channels Group
@@ -1494,8 +1494,8 @@ pn.RemoveChannelFromChannelGroup().
 |===
 | Parameter | Type | Required | Description
 
-| Channels | string | Yes | `channels` remove from the channel group.
-| ChannelGroup | []string | Yes | The `channel group` to remove the channels from.
+| Channels | []string | Yes | `channels` remove from the channel group.
+| ChannelGroup | string | Yes | The `channel group` to remove the channels from.
 |===
 
 ====== Basic usage
@@ -1620,7 +1620,7 @@ HistoryResponseItem
 ----
 res, status, err := pn.History().
     Channel("my-ch"). // where to fetch history from
-    Count(100). // how many items to fetch
+    Count(3). // how many items to fetch
     Reverse(true). // should go in reverse?
     Execute()
 ----
