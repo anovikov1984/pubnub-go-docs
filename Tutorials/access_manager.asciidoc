@@ -20,6 +20,10 @@ You can set a defult auth key at instantiation time using the auth attribute:
 
 [source, go]
 ----
+import (
+    pubnub "github.com/pubnub/go"
+)
+
 config := pubnub.NewConfig()
 config.AuthKey = "my_authkey"
 ----
@@ -28,6 +32,10 @@ config.AuthKey = "my_authkey"
 
 [source, go]
 ----
+import (
+    pubnub "github.com/pubnub/go"
+)
+
 config := pubnub.NewConfig()
 config.SubscribeKey = "my_sub_key"
 config.PublishKey = "my_pub_key"
@@ -101,6 +109,10 @@ fmt.Println(res, status, err)
 [source, go]
 .HANDLING PERMISSION DENIED ERRORS
 ----
+import (
+    pubnub "github.com/pubnub/go"
+)
+
 &pubnub.PNStatus{
     Category:9,
     Operation:0,
@@ -121,6 +133,10 @@ It can be easily handled by taking action on the error callback based on the cha
 
 [source, go]
 ----
+import (
+    pubnub "github.com/pubnub/go"
+)
+
 listener := pubnub.NewListener()
 
 go func() {
@@ -174,6 +190,10 @@ res, status, err := pn.Grant().
 [source, go]
 .MESSAGE LAYER ENCRYPTION AES256
 ----
+import (
+    pubnub "github.com/pubnub/go"
+)
+
 config := pubnub.NewConfig()
 config.SubscribeKey = "my_sub_key"
 config.PublishKey = "my_pub_key"
@@ -187,6 +207,10 @@ TLS/SSL
 [source, go]
 .TLS/SSL is enabled by default, you can disable it in your pubnub config like
 ----
+import (
+    pubnub "github.com/pubnub/go"
+)
+
 config := pubnub.NewConfig()
 config.SubscribeKey = "my_sub_key"
 config.PublishKey = "my_pub_key"

@@ -15,6 +15,10 @@ pn.Publish().
 
 [source, go]
 ----
+import (
+    pubnub "github.com/pubnub/go"
+)
+
 config := pubnub.NewConfig()
 config.SubscribeKey = "my-key"
 config.FilterExpression = "filter == expression"
@@ -25,6 +29,10 @@ pn := pubnub.NewPubNub(config)
 
 [source, go]
 ----
+import (
+    pubnub "github.com/pubnub/go"
+)
+
 config := pubnub.NewConfig()
 config.SubscribeKey = "my-key"
 config.FilterExpression = "uuid != '" + config.Uuid + "'"
@@ -61,6 +69,10 @@ On the subscriber side, we specify the filter expression to make sure only engli
 
 [source, go]
 ----
+import (
+    pubnub "github.com/pubnub/go"
+)
+
 config := pubnub.NewConfig()
 config.SubscribeKey = "my-key"
 config.FilterExpression = "language == 'english'"
@@ -119,6 +131,10 @@ On the subscribe side, we are going to use the contains operator to support mult
 
 [source, go]
 ----
+import (
+    pubnub "github.com/pubnub/go"
+)
+
 config := pubnub.NewConfig()
 config.SubscribeKey = "my-key"
 config.FilterExpression = "('french', 'spanish') contains language"
@@ -164,6 +180,10 @@ On the subscribe side, we are going to use the != operator to reject messages wr
 
 [source, go]
 ----
+import (
+    pubnub "github.com/pubnub/go"
+)
+
 config := pubnub.NewConfig()
 config.SubscribeKey = "my-key"
 config.FilterExpression = "language != 'spanish'"
@@ -228,6 +248,10 @@ Client filter would be applied to all channels by default but you could do somet
 
 [source, go]
 ----
+import (
+    pubnub "github.com/pubnub/go"
+)
+
 config := pubnub.NewConfig()
 config.SubscribeKey = "my-key"
 config.FilterExpression = "(price > 100.00 && channel == 'AAPL') || (price < 15.00 && channel == 'GOOG')"
@@ -251,6 +275,10 @@ On the subscriber side, we modify the expression to use the > operator
 
 [source, go]
 ----
+import (
+    pubnub "github.com/pubnub/go"
+)
+
 meta := make(map[string]interface{})
 
 meta["my"] = "meta"

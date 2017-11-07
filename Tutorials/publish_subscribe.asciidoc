@@ -3,6 +3,10 @@
 [source, go]
 .INITIALIZE THE API
 ----
+import (
+    pubnub "github.com/pubnub/go"
+)
+
 config := pubnub.NewConfig()
 config.SubscribeKey = "my-sub-key"
 config.PublishKey = "my-pub-key"
@@ -14,6 +18,10 @@ pn = pubnub.NewPubNub(config)
 [source, go]
 .PUBLISHING AND SUBSCRIBING TO A CHANNEL
 ----
+import (
+    pubnub "github.com/pubnub/go"
+)
+
 pn.Subscribe(&pubnub.SubscribeOperation{
     Channels: []string{"my-channel"}, // subscribe to channels
 })
@@ -36,6 +44,10 @@ fmt.Println(res, status, err)
 [source, go]
 .PUBLISH AFTER SUBSCRIBE CONNECT
 ----
+import (
+    pubnub "github.com/pubnub/go"
+)
+
 config := pubnub.NewConfig()
 config.SubscribeKey = "demo"
 config.PublishKey = "demo"
@@ -83,6 +95,10 @@ pn.Subscribe(&pubnub.SubscribeOperation{
 [source, go]
 .UNSUBSCRIBING FROM A CHANNEL
 ----
+import (
+    pubnub "github.com/pubnub/go"
+)
+
 pn.Unsubscribe(&pubnub.UnsubscribeOperation{
     Channels: []string{"my-channel"},
 })
