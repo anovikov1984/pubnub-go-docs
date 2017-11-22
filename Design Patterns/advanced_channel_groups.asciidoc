@@ -140,10 +140,6 @@ fmt.Println("Channel added to channel group")
 
 [source, go]
 ----
-import (
-    pubnub "github.com/pubnub/go"
-)
-
 // Get the List of Friends
 listChannelsRes, _, err := pn.ListChannelsInChannelGroup().
     ChannelGroup("cg-user-a-friends").
@@ -193,10 +189,6 @@ pn.Subscribe(&pubnub.SubscribeOperation{
 
 [source, go]
 ----
-import (
-    pubnub "github.com/pubnub/go"
-)
-
 listener := pubnub.NewListener()
 
 go func() {
