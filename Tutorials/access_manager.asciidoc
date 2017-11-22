@@ -109,10 +109,6 @@ fmt.Println(res, status, err)
 [source, go]
 .HANDLING PERMISSION DENIED ERRORS
 ----
-import (
-    pubnub "github.com/pubnub/go"
-)
-
 &pubnub.PNStatus{
     Category:9,
     Operation:0,
@@ -133,10 +129,6 @@ It can be easily handled by taking action on the error callback based on the cha
 
 [source, go]
 ----
-import (
-    pubnub "github.com/pubnub/go"
-)
-
 listener := pubnub.NewListener()
 
 go func() {
