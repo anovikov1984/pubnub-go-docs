@@ -1,0 +1,124 @@
+=== Global Object Naming
+
+* `V3` exposes `github.com/pubnub/messaging`
+* `V4` exposes `github.com/pubnub/go`
+
+=== SDK Initialization is now done via PNConfiguration instance
+
+* `V3` initiates via:
+
+[source, go]
+----
+import "github.com/pubnub/go/messaging"
+
+pubnub := messaging.NewPubnub("demo", "demo", "", "", false, "", nil)
+----
+
+* `V4` initiates via:
+
+[source, go]
+----
+import "github.com/pubnub/go"
+
+config := pubnub.NewConfig()
+config.SubscribeKey = "demo"
+config.PublishKey = "demo"
+config.SecretKey = "my-secret-key"
+config.CipherKey = "my-cipher-key"
+
+pn := pubnub.NewPubNub(config)
+----
+
+=== Transactional requests now using builders:
+
+* `V3` return values via success/error channels:
+
+[source, go]
+----
+successChannel := make(chan []byte)
+errorChannel := make(chan []byte)
+
+go pubnub.History("my_channel", "", 100, 0, 0, false, false, successChannel, errorChannel)
+
+select {
+    case response := <-successChannel:
+        fmt.Println(string(response))
+    case err := <-errorChannel:
+        fmt.Println(string(err))
+    case <-messaging.Timeout():
+        fmt.Println("History() timeout")
+}
+----
+
+* `V4` return response/status/error values synchronously now:
+
+[source, go]
+----
+res, status, err := pn.History().
+    Channel("ch").
+    Count(2).
+    IncludeTimetoken(true).
+    Reverse(true).
+    Start(int64(0)).
+    End(int64(1000)).
+    Execute()
+
+if err != nil {
+    panic(err)
+}
+
+fmt.Println(res)
+fmt.Println(status)
+----
+
+NOTE: To execute a request asynchronously, wrap it with
+`goroutine`. Use channels to resolve a result.
+
+=== Subscribe using listeners instead of channels
+
+* `V3` subscribe example:
+
+[source, go]
+----
+successChannel := make(chan []byte)
+errorChannel := make(chan []byte)
+
+go pubnub.Subscribe("ch")
+
+go func() {
+    for {
+        select {
+            case response := <-successChannel:
+                fmt.Println(response)
+            case err := <-errorChannel:
+                fmt.Println(string(err))
+            case <-messaging.SubscribeTimeout():
+                panic("Subscribe timeout")
+        }
+    }
+}()
+----
+
+* `V4` subscribe example:
+
+[source, go]
+----
+listener := pubnub.NewListener()
+
+go func() {
+    for {
+        select {
+        case status := <-listener.Status:
+            fmt.Println(status)
+        case message := <-listener.Message:
+            fmt.Println(message)
+        case presence := <-listener.Presence:
+            fmt.Println(presence)
+        }
+    }
+}()
+
+pn.AddListener(listener)
+
+pn.Subscribe().Channels([]string{"ch"}).Execute()
+----
