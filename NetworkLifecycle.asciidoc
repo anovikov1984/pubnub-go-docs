@@ -1,0 +1,74 @@
+=== How do you manage lifecycle?
+
+It is users responsibility to prepare client's configuration instance and pass it during PubNub client instantiation. As long as there is a reference to the client instance it will be alive. The initialized client doesn't perform any activities until activated by user commands.
+
+=== How do you know you have active connection?
+
+Client doesn't check for active connection on its own and instead relies on network API response.
+
+On a user command, the client prepares a REST request to PubNub API and passes it to the networking API for processing. If there were no issues and the response arrived in time (timeout can be specified), the results are parsed and wrapped into objects which are returned using callbacks.
+
+If there was an issue during request processing, networking API will return information about the error which will then be parsed and wrapped into objects and returned to the caller.
+
+In case of network issues, Realtime API's will return status object with category set to PNNetworkIssuesCategory.In case of network issues, Realtime API's will return status object with category set to `PNUnknownCategory`.
+
+There are also a set of other error categories:
+
+`PNCancelledCategory` - a request was be canceled
+
+`PNAccessDeniedCategory` - does not have permission to execute the request
+
+`PNTimeoutCategory` - response was not received before specified timeout
+
+`PNUnknownCategory` - other errors, that you can receive from the server have this status
+
+Heartbeat API can be used as way to detect when network issues appear. Heartbeats send a request at intervals (which is set during client instance configuration) and utilize observer's callback to report successful and failed attempts. There is a chance that the network will get spotty between calls to this API and the socket with active long-poll (subscribe API for realtime messages) may not notice those issues and listen for events from a broken pipe.
+
+=== How can you tell where the connection abruptly terminated?
+
+There are four status events which may tell what there is some network issues: PNTimeoutCategory, PNCancelledCategory, PNAccessDeniedCategory and PNUnknownCategory.
+
+====== PNTimeoutCategory
+
+This status may arrive if non-subscribe request didn't receive a response from the server in time. This may happen only if:
+
+* Issues on service itself.
+* There is a proxy between client and PubNub service which didn't send the request or didn't return a response in time
+* There are issues with spotty network signal quality (or a lot of noise on the band)
+
+====== PNCancelledCategory
+
+This status may arrive if client cancel the request
+
+====== PNAccessDeniedCategory
+
+Does not have any permissions to execute the request
+
+====== PNUnknownCategory
+
+You can receive this status due to server errors or unsuccessful requests
+
+
+=== WHAT IS THE RECONNECTION STATUS?
+
+There is `PNDisconnectedCategory` which can be generated in the middle of client lifecycle while it subscribed to real-time data channels.
+
+In case that this status arrives, client starts pinging PubNub services using Time API every 10 seconds. As soon as a request is processed successfully, client will try to restore subscription on channels on which it was subscribed previously. If configured to keep timetoken on subscription restore, client will try to catch up on missed messages.
+
+When client completes subscription restore after `PNDisconnectedCategory` it will generate `PNReconnectedCategory` to notify observers what client has been reconnected to real-time data channels.
+
+=== Reconnection Policies
+
+The GO V4 platform ships with reconnection policy disabled by default and can be enabled by setting `PNReconnectionPolicy` on `Config` to one of the following values:
+
+1. (default) `PNReconnectionPolicy = PNNonePolicy` - indicates that `NO` action will taken when there is a network or internet issue.
+2. `PNReconnectionPolicy = PNLinearPolicy` - SDK will try to reconnect each 3 seconds.
+3. `PNReconnectionPolicy = PNExponentialPolicy` - SDK uses the Exponential Backoff algorithm to reconnect when there is a network or internet issue.
+
+====== RECONNECTION MANUALLY
+
+There is no way to reconnect manually in GO V4
+
+=== How to handle 403's on active subscriptions?
+
+`403` response on a subscribe event occurs when Access Manager is enabled and the user doesn't have access to the `channel` or the `grant TTL` has expired. In this case you need to create a new auth key, grant access to the user (from your server) and subscribe again.
