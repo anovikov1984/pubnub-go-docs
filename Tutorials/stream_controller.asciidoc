@@ -3,10 +3,6 @@
 [source, go]
 .SUBSCRIBING BY SPECIFYING CHANNEL AS AN ARRAY
 ----
-import (
-    pubnub "github.com/pubnub/go"
-)
-
 pn.Subscribe(&pubnub.SubscribeOperation{
     Channels:   []string{"my-channel1", "my-channel2"}, // subscribe to channels information
 })
@@ -15,10 +11,6 @@ pn.Subscribe(&pubnub.SubscribeOperation{
 [source, go]
 .PASS AN ARRAY OF CHANNELS TO UNSUBSCRIBE
 ----
-import (
-    pubnub "github.com/pubnub/go"
-)
-
 pn.Unsubscribe(&pubnub.UnsubscribeOperation{
     ChannelGroups: []string{"cg1", "cg2", "cg3"},
     Channels: []string{"ch1", "ch2", "ch3"},
@@ -29,10 +21,6 @@ pn.Unsubscribe(&pubnub.UnsubscribeOperation{
 
 [source, go]
 ----
-import (
-    pubnub "github.com/pubnub/go"
-)
-
 pn.Subscribe(&pubnub.SubscribeOperation{
     Channels:   []string{"foo.*"}, // subscribe to channels information
 })
@@ -78,10 +66,6 @@ fmt.Println(res, status, err)
 [source, go]
 .SUBSCRIBING TO THE CHANNEL GROUP
 ----
-import (
-    pubnub "github.com/pubnub/go"
-)
-
 pn.Subscribe(&pubnub.SubscribeOperation{
     ChannelGroups:   []string{channelGroup},
     PresenceEnabled: true,
@@ -91,10 +75,6 @@ pn.Subscribe(&pubnub.SubscribeOperation{
 [source, go]
 .UNSUBSCRIBING FROM THE CHANNEL GROUP
 ----
-import (
-    pubnub "github.com/pubnub/go"
-)
-
 pn.Unsubscribe(&pubnub.UnsubscribeOperation{
     ChannelGroups: []string{channelGroup},
 })
@@ -103,10 +83,6 @@ pn.Unsubscribe(&pubnub.UnsubscribeOperation{
 [source, go]
 .RECEIVING CHANNEL GROUP PRESENCE MESSAGES
 ----
-import (
-    pubnub "github.com/pubnub/go"
-)
-
 pn.Subscribe(&pubnub.SubscribeOperation{
     ChannelGroups:   []string{"cg1", "cg2"}, // subscribe to channel groups
     PresenceEnabled: true, // also subscribe to related presence information
