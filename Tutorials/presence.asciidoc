@@ -18,10 +18,6 @@ pn = pubnub.NewPubNub(config)
 [source, go]
 .RECEIVING PRESENCE JOIN, LEAVE, AND TIMEOUT EVENTS IN REALTIME
 ----
-import (
-    pubnub "github.com/pubnub/go"
-)
-
 pn.Subscribe(&pubnub.SubscribeOperation{
     Channels:        []string{"my-channel"},
     PresenceEnabled: true,
@@ -114,10 +110,6 @@ for _, v := range res.Channels {
 [source, go]
 .EXAMPLE RESPONSE
 ----
-import (
-    pubnub "github.com/pubnub/go"
-)
-
 &pubnub.HereNowResponse{
     TotalChannels:1,
     TotalOccupancy:1,
@@ -150,10 +142,6 @@ fmt.Println(res, status, err)
 [source, go]
 .EXAMPLE RESPONSE
 ----
-import (
-    pubnub "github.com/pubnub/go"
-)
-
 &pubnub.HereNowResponse{
     TotalChannels:2,
     TotalOccupancy:2,
@@ -193,10 +181,6 @@ fmt.Println(res, status, err)
 [source, go]
 .EXAMPLE RESPONSE
 ----
-import (
-    pubnub "github.com/pubnub/go"
-)
-
 &pubnub.WhereNowResponse{
     Channels:[]string{
         "my-ch1", "my-ch"
@@ -240,10 +224,6 @@ In addition to setting state via the setPresenceState() setter method, you can s
 
 [source, go]
 ----
-import (
-    pubnub "github.com/pubnub/go"
-)
-
 listener := pubnub.NewListener()
 state := map[string]interface{}
 
@@ -279,10 +259,6 @@ In this case, the join event would also include the state information, similar t
 
 [source, go]
 ----
-import (
-    pubnub "github.com/pubnub/go"
-)
-
 &pubnub.PNPresence{
     Event:"join",
     Uuid:"e23153ec-cf12-464b-9c87-652bd91fff8d",
@@ -304,10 +280,6 @@ import (
 [source, go]
 .HERE NOW AND WHERE NOW ADVANCED USAGE
 ----
-import (
-    pubnub "github.com/pubnub/go"
-)
-
 &pubnub.HereNowResponse{
     TotalChannels:2,
     TotalOccupancy:2,
@@ -340,10 +312,6 @@ Calling with state as false returns the UUIDs, but not the state data:
 
 [source, go]
 ----
-import (
-    pubnub "github.com/pubnub/go"
-)
-
 &pubnub.HereNowResponse{
     TotalChannels:2,
     TotalOccupancy:2,
@@ -376,10 +344,6 @@ and calling with uuid as false omits all UUID and state data (since state is a c
 
 [source, go]
 ----
-import (
-    pubnub "github.com/pubnub/go"
-)
-
 &pubnub.HereNowResponse{
     TotalChannels:2,
     TotalOccupancy:2,
